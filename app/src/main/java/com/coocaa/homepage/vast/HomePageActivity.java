@@ -198,8 +198,8 @@ public class HomePageActivity extends AppCompatActivity {
     private void launchTv() {
 //        com.dianshijia.newlive
         PackageManager packageManager = getPackageManager();
-        Intent intent = packageManager.getLaunchIntentForPackage("com.dianshijia.newlive");
-        launchByIntent(intent, "电视家");
+        Intent intent = packageManager.getLaunchIntentForPackage("com.tianci.tv");
+        launchByIntent(intent, "电视");
 
 
     }
