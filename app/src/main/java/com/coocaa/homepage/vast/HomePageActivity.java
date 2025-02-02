@@ -206,8 +206,8 @@ public class HomePageActivity extends AppCompatActivity {
 
     private void launchMacket() {
 
-        Intent intent = getPackageManager().getLaunchIntentForPackage("com.ant.store.appstore");
-        launchByIntent(intent,"蚂蚁市场");
+        Intent intent = getPackageManager().getLaunchIntentForPackage("com.dangbeimarket");
+        launchByIntent(intent,"当贝市场");
     }
 
     private void launchByIntent(Intent intent, String packageName) {
