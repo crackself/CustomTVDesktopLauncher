@@ -3,7 +3,7 @@ name: Build Android 4.4.4 APK
 on:
   push:
     branches: [ main, master ]
-  workflow_dispatch: # 支持在 GitHub Actions 页面手动点击运行
+  workflow_dispatch:
 
 jobs:
   build:
@@ -16,17 +16,17 @@ jobs:
       - name: 2. 配置 JDK 环境
         uses: actions/setup-java@v4
         with:
-          # 该项目原仓库为较老的 Gradle 结构，默认使用 JDK 8 兼容性最好
-          # 如果你的 Fork 升级过 Gradle 7/8，请将此处改为 '11' 或 '17'
           java-version: '8'
           distribution: 'temurin'
 
-      - name: 3. 确认并适配 Android 4.4.4 (API 19)
+      - name: 3. 修复硬编码的 Windows 路径与签名配置
         run: |
-          if [ -f "app/build.gradle" ]; then
-            echo "当前 app/build.gradle 中的 SDK 配置："
-            grep -E "SdkVersion|minSdk|targetSdk|compileSdk" app/build.gradle || true
-          fi
+          # 将 Windows 绝对路径替换为合法的 Linux 相对路径，解决 URISyntaxException
+          sed -i -E "s|file\(['\"][^'\"]*\.jks['\"]\)|file('default.jks')|g" app/build.gradle
+          # 取消对原作者自定义 signingConfig 的引用，让 assembleDebug 使用默认调试签名
+          sed -i -E "s/signingConfig[[:space:]]+signingConfigs\.[a-zA-Z0-9_]+//g" app/build.gradle
+          echo "修复后的 app/build.gradle 前 25 行："
+          head -n 25 app/build.gradle
 
       - name: 4. 赋予 gradlew 执行权限
         run: chmod +x gradlew
