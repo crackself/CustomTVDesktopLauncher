@@ -1,4 +1,4 @@
-name: Build Android 4.4.4 APK
+name: Build Android 4.4.4 Release APK
 
 on:
   push:
@@ -19,28 +19,52 @@ jobs:
           java-version: '8'
           distribution: 'temurin'
 
-      - name: 3. 修复路径并自动生成缺失的 default.jks 签名文件
+      - name: 3. 修复路径、生成签名并配置 Release 构建
         run: |
-          # 将原作者硬编码的 Windows 路径替换为相对路径
+          # 修复原作者硬编码的 Windows 路径
           sed -i -E "s|file\(['\"][^'\"]*\.jks['\"]\)|file('default.jks')|g" app/build.gradle
-          # 自动生成与 build.gradle 中密码/别名完全匹配的密钥文件
+
+          # 生成签名密钥文件
           keytool -genkeypair -v \
             -keystore app/default.jks \
             -keyalg RSA -keysize 2048 -validity 10000 \
             -alias default \
             -storepass default \
             -keypass default \
-            -dname "CN=Android Debug,O=Android,C=US"
+            -dname "CN=Android Release,O=Android,C=US"
+
+          # 追加 Release 配置：关闭 debuggable 并开启 V1 签名以兼容 Android 4.4.4
+          cat << 'EOF' >> app/build.gradle
+
+          android {
+              signingConfigs {
+                  release {
+                      storeFile file('default.jks')
+                      storePassword 'default'
+                      keyAlias 'default'
+                      keyPassword 'default'
+                      v1SigningEnabled true
+                      v2SigningEnabled true
+                  }
+              }
+              buildTypes {
+                  release {
+                      debuggable false
+                      signingConfig signingConfigs.release
+                  }
+              }
+          }
+          EOF
 
       - name: 4. 赋予 gradlew 执行权限
         run: chmod +x gradlew
 
-      - name: 5. 编译 Debug APK
-        run: ./gradlew assembleDebug --console=plain
+      - name: 5. 编译 Release APK
+        run: ./gradlew assembleRelease --console=plain
 
-      - name: 6. 上传编译好的 APK
+      - name: 6. 上传编译好的 Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: CustomTVDesktopLauncher-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          name: CustomTVDesktopLauncher-release-apk
+          path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
